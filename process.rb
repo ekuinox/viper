@@ -2,7 +2,7 @@
 require './AnalyzeReport.rb'
 require './tweet.rb'
 
-def create_msg(p)
+def create_msg(result)
   msg = ""
 
   if result[:portal][:name] and result[:attacked_by]

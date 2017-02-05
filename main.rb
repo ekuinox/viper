@@ -3,10 +3,11 @@ require 'yaml'
 require './client.rb'
 require './process.rb'
 
-DEBUG = false
+DEBUG = ARGV[0].nil?? false : true
 
 if DEBUG
   require 'pp'
+  puts "DEBUG MODE TRUE"
 end
 
 STDOUT.sync = true
