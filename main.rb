@@ -3,7 +3,7 @@ require 'yaml'
 require './client.rb'
 require './process.rb'
 
-DEBUG = ARGV[0]? false : true
+DEBUG = ARGV[0]? true : false
 
 if DEBUG
   require 'pp'

@@ -6,7 +6,7 @@ def create_msg(result)
   msg = ""
 
   if result[:portal][:name] and result[:attacked_by]
-    msg += result[:portal][:name] + " is attacked by " + result[:attacked_by] + "\n"
+    msg += result[:portal][:name] + " was attacked by " + result[:attacked_by] + "\n"
   end
 
   if result[:portal][:status]
@@ -23,6 +23,8 @@ def create_msg(result)
     msg += "s" unless result[:about_damage][:remaining] < 2
     msg += " remaining\n"
   end
+
+  msg += result[:portal][:link] if result[:portal][:link]
   
   return msg
 

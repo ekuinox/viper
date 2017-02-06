@@ -2,15 +2,25 @@
 require 'net/imap'
 require 'open-uri'
 
+HOST = "imap.gmail.com"
+PORT = 993
+
 class IMAPClient
   @imap = nil
 
-  def initialize(user, pass, mail_label = "INBOX", debug = false)
-    @imap = Net::IMAP.new('imap.gmail.com', 993, true)
-    @imap.login(user, pass)
-    @imap.select(mail_label)
-    puts "#{Time.now} connected to IMAP server"
+  def initialize(user, pass, label = "INBOX", debug = false)
+    @user = user
+    @pass = pass
+    @label = label
     @debug = debug
+    connect
+  end
+
+  def connect()
+    @imap = Net::IMAP.new(HOST, PORT, true)
+    @imap.login(@user, @pass)
+    @imap.select(@label)
+    puts "#{Time.now} connected to IMAP server"
   end
 
   def start
@@ -21,6 +31,15 @@ class IMAPClient
           last_id = resp.data
           @imap.idle_done
         end
+      end
+    rescue Net::IMAP::Error => e
+      p e.inspect
+      if e.inspect.include? "connection closed"
+        puts "#{Time.now} connection closed: reconecting..."
+        connect
+      else
+        tweet "unknown mail server error /"
+        raise
       end
     end
     return last_id
