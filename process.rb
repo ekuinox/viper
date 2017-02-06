@@ -34,9 +34,10 @@ def process_body(body, debug = false)
   r = AnalyzeReport.new body
   result = r.get_all
 
-  unless result.nil?
+  if result
     msg = create_msg result
     if msg
+      puts "///////////////////////////////////////////"
       puts msg
       tweet(msg, result[:portal][:img])
     end
