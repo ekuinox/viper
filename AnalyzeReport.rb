@@ -3,51 +3,51 @@ require "readline"
 require 'nokogiri'
 
 class AnalyzeReport
-	
-	# initialize
-	def initialize mail
-		if mail.is_a? String
-			@mail = mail
-			@doc = Nokogiri::HTML(mail)
-			analyze
-		else
-			return 0
-		end
-	end
 
-	# analyze
-	def analyze
+    # initialize
+    def initialize mail
+        if mail.is_a? String
+            @mail = mail
+            @doc = Nokogiri::HTML(mail)
+            analyze
+        else
+            return 0
+        end
+    end
 
-		# ATTACKER
-		@attacked_by = @doc.xpath("//table//table//tr").last.xpath("//tbody//td/div/span")[0].text
+    # analyze
+    def analyze
 
-		# AGENT
-		r = @doc.xpath('//tr[2]//tr[1]//span')
-		@agent = {
-			name: r[1].text,
-			faction: r[3].text,
-			level: r[5].text.gsub(/L/, '').to_i
-		}
+        # ATTACKER
+        @attacked_by = @doc.xpath("//table//table//tr").last.xpath("//tbody//td/div/span")[0].text
 
-		# PORTAL
-		r = @doc.xpath("//table//table//tr[3]//div")
-		@portal = {
-			name: r[0].content,
-			link: r[1].xpath("a/@href").to_s,
-			img: @doc.xpath("//table//table//tr[4]//img[1]/@src")[0].to_s,
-		}
+        # AGENT
+        r = @doc.xpath('//tr[2]//tr[1]//span')
+        @agent = {
+            name: r[1].text,
+            faction: r[3].text,
+            level: r[5].text.gsub(/L/, '').to_i
+        }
 
-		#PORTAL STATUS
-		if @doc.xpath('//div/table')[-1].xpath('//div')[-1].text.gsub(/(\n|\r| )/, "").match(/STATUS:Level([0-9]{1,})Health:([0-9]{1,})%Owner:(.+)/)
-			@portal[:status] = {
-				level: $1.to_i,
-				health: $2.to_i,
-				owner: $3 == "[uncaptured]" ? nil : $3,
-			}
-		end
+        # PORTAL
+        r = @doc.xpath("//table//table//tr[3]//div")
+        @portal = {
+            name: r[0].content,
+            link: r[1].xpath("a/@href").to_s,
+            img: @doc.xpath("//table//table//tr[4]//img[1]/@src")[0].to_s,
+        }
 
-		# PORTAL GEO
-		if @portal[:link].match /ll=([-0-9.]+),([-0-9.]+)/
+        #PORTAL STATUS
+        if @doc.xpath('//div/table')[-1].xpath('//div')[-1].text.gsub(/(\n|\r| )/, "").match(/STATUS:Level([0-9]{1,})Health:([0-9]{1,})%Owner:(.+)/)
+            @portal[:status] = {
+                level: $1.to_i,
+                health: $2.to_i,
+                owner: $3 == "[uncaptured]" ? nil : $3,
+            }
+        end
+
+        # PORTAL GEO
+        if @portal[:link].match /ll=([-0-9.]+),([-0-9.]+)/
 			@portal[:geo] = {
 				lat: $1.to_f,
 				lng: $2.to_f
