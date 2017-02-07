@@ -1,7 +1,6 @@
 #!/usr/bin/ruby
 require './AnalyzeReport.rb'
 require './tweet.rb'
-require 'pp'
 
 def create_msg(result)
     msg = ""
@@ -16,19 +15,18 @@ def create_msg(result)
         msg += "Health: " + result[:portal][:status][:health].to_s + "%\n"
     end
 
+    if result[:portal][:about_damage]
+        msg += result[:about_damage][:count].to_s + " " + result[:about_damage][:to]
+        msg += "s" if result[:about_damage][:count] > 1
+        msg += " destroyed\n"
+        msg += (result[:about_damage][:remaining] == 0? "No" : result[:about_damage][:remaining].to_s) + " resonator"
+        msg += "s" unless result[:about_damage][:remaining] < 2
+        msg += " remaining\n"
+    end
 
-    msg += result[:about_damage][:count].to_s + " " + result[:about_damage][:to]
-    msg += "s" if result[:about_damage][:count] > 1
-    msg += " destroyed\n"
-    msg += (result[:about_damage][:remaining] == 0? "No" : result[:about_damage][:remaining].to_s) + " resonator"
-    msg += "s" unless result[:about_damage][:remaining] < 2
-    msg += " remaining\n"
-end
+    msg += result[:portal][:link] if result[:portal][:link]
 
-msg += result[:portal][:link] if result[:portal][:link]
-
-return msg
-
+    return msg
 end
 
 def process_body(body, debug = false)
