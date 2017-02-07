@@ -85,8 +85,9 @@ class IMAPClient
         end
       end
       return body
+	else
+	  return nil
     end
-    return 0
   end
 
 end

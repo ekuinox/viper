@@ -1,6 +1,7 @@
 #!/usr/bin/ruby
 require './AnalyzeReport.rb'
 require './tweet.rb'
+require 'pp'
 
 def create_msg(result)
   msg = ""
@@ -31,16 +32,16 @@ def create_msg(result)
 end
 
 def process_body(body, debug = false)
-  r = AnalyzeReport.new body
-  result = r.get_all
-
-  if result
-    msg = create_msg result
-    if msg
-      puts "///////////////////////////////////////////"
-      puts msg
-      tweet(msg, result[:portal][:img])
-    end
-  end
+	r = AnalyzeReport.new body
+	result = r.get_all
+	#pp result
+	unless result.nil?
+    	msg = create_msg(result)
+		msg += "#{Time.now}" if debug
+    	if msg
+      		puts msg
+      		tweet(msg, result[:portal][:img])
+    	end
+	end
 
 end

@@ -30,7 +30,7 @@ while true
   if mail
     mail.each do |m|
       body = imap.process_mail m
-      process_body(body, DEBUG)
+      process_body(body, DEBUG) unless body.nil?
     end
   end
 end
