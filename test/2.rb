@@ -1,8 +1,9 @@
 require '../analyzer.rb'
 require 'pp'
+require 'json'
 
-FILE_PATH = '../samples/1pr.html'
+FILE_PATH = '../samples/1.html'
 
 reports = AnalyzeReport File.read(FILE_PATH, :encoding => Encoding::UTF_8)
 
-pp reports
+puts JSON.generate reports

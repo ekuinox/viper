@@ -4,15 +4,14 @@ require 'pp'
 # 参考
 # https://github.com/Sabara/ingressmap/blob/master/ingressmap.js#L554
 
-#FILE_PATH = 'C:\dev\ruby\viper\samples\trau.html'
-FILE_PATH = 'C:\dev\ruby\viper\test\te2.html'
+FILE_PATH = '../samples/2.html'
 
 @doc = Nokogiri::HTML(File.read(FILE_PATH, :encoding => Encoding::UTF_8))
 
 r = @doc.xpath('//table[@width="750px"]/tbody/tr[2]/td/table[@width="700px"]/tbody/tr')
 
 reports = {}
-i = -1 # for reports
+i = 0 # for reports
 j = 0 # for linked portals
 
 r.each do |s|
@@ -20,20 +19,26 @@ r.each do |s|
 	# Agent 情報
 	unless s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').empty?
 		#puts s.to_html
-		s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').text.match(/Agent Name:(.+)Faction:(.+)Current Level:L([0-9]{1,2})$/) do |result|
+		s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').text.match(/Agent Name:(.+)Faction:(.+)Current Level:L([0-9]{1,2})$/) do |m|
 			reports[:agent] = {
-				:codename => result[1],
-				:faction => result[2],
-				:level => result[3].to_i
+				:codename => m[1],
+				:faction => m[2],
+				:level => m[3].to_i
 			}
 		end
 	end
 
 	# <div>DAMAGE REPORT</div>
 	unless s.xpath('td[@style="font-size: 17px; padding-bottom: .2em; border-bottom: 2px solid #403F41;"]').empty?
-		i += 1
-		reports[i] = {}
 		# puts s.to_html
+	end
+
+	# <td style="font-size: 17px;padding-bottom: .2em;border-bottom: 2px solid #403F41;text-transform: uppercase;"></td>
+	# レポートの切り替わり
+	unless s.xpath('td[@style="font-size: 17px;padding-bottom: .2em;border-bottom: 2px solid #403F41;text-transform: uppercase;"]').empty?
+		i += 1
+		j = 0
+		reports[i] = {}
 	end
 
 	# ポータル情報(名前,アドレス)
@@ -58,11 +63,11 @@ r.each do |s|
 		reports[i][:attacked_by] = about_damage.xpath('span[@style="color: #428F43;"]').text
 		
 		# DAMAGE:9 Links destroyed by godiego at 10:00 hrs GMTNo remaining Resonators detected on this Portal.
-		about_damage.text.match(/([0-9]{1}) (.+) destroyed by .+ at ([0-9]{1,2}:[0-9]{1,2}) hrs GMT/) do |result|
+		about_damage.text.match(/([0-9]{1}) (.+) destroyed by .+ at ([0-9]{1,2}:[0-9]{1,2}) hrs GMT/) do |m|
 			reports[i][:portal][:damage] = {
-				:count => result[1].to_i,
-				:type => result[2].gsub(/s$/, ""),
-				:date => result[3]
+				:count => m[1].to_i,
+				:type => m[2].gsub(/s$/, ""),
+				:date => m[3]
 			}
 		end
 
@@ -91,11 +96,12 @@ r.each do |s|
 			intel = r.attribute('href').to_s
 		end
 
-		s.xpath('td/table[@cellpadding="0"][@cellspacing="0"][@border="0"][@width="700px"]/td').text.match(/(.+): (.+)/) do |result|
+		s.xpath('td/table[@cellpadding="0"][@cellspacing="0"][@border="0"][@width="700px"]/td').text.match(/(.+): (.+)/) do |m|
+			puts m[1] + j.to_s + i.to_s
 			reports[i][:linked_portals][j] = {
 				:intel => intel,
-				:name => result[1],
-				:address => result[2]
+				:name => m[1],
+				:address => m[2]
 			}
 			j += 1
 		end
@@ -103,3 +109,4 @@ r.each do |s|
 end
 
 pp reports
+puts i

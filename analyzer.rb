@@ -6,7 +6,7 @@ def AnalyzeReport mail
 	r = @doc.xpath('//table[@width="750px"]/tbody/tr[2]/td/table[@width="700px"]/tbody/tr')
 	
 	reports = {}
-	i = -1 # for reports
+	i = 0 # for reports
 	j = 0 # for linked portals
 	
 	r.each do |s|
@@ -14,22 +14,29 @@ def AnalyzeReport mail
 			# Agent 情報
 			unless s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').empty?
 				#puts s.to_html
-				s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').text.match(/Agent Name:(.+)Faction:(.+)Current Level:L([0-9]{1,2})$/) do |result|
+				s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').text.match(/Agent Name:(.+)Faction:(.+)Current Level:L([0-9]{1,2})$/) do |m|
 					reports[:agent] = {
-						:codename => result[1],
-						:faction => result[2],
-						:level => result[3].to_i
+						:codename => m[1],
+						:faction => m[2],
+						:level => m[3].to_i
 					}
 				end
 			end
 		
 			# <div>DAMAGE REPORT</div>
 			unless s.xpath('td[@style="font-size: 17px; padding-bottom: .2em; border-bottom: 2px solid #403F41;"]').empty?
-				i += 1
-				reports[i] = {}
 				# puts s.to_html
 			end
 		
+
+			# <td style="font-size: 17px;padding-bottom: .2em;border-bottom: 2px solid #403F41;text-transform: uppercase;"></td>
+			# レポートの切り替わり
+			unless s.xpath('td[@style="font-size: 17px;padding-bottom: .2em;border-bottom: 2px solid #403F41;text-transform: uppercase;"]').empty?
+				i += 1
+				j = 0
+				reports[i] = {}
+			end
+
 			# ポータル情報(名前,アドレス)
 			unless s.xpath('td[@style="padding-top: 1em; padding-bottom: 1em;"]').empty?
 				reports[i] = {:portal => {
@@ -52,11 +59,11 @@ def AnalyzeReport mail
 				reports[i][:attacked_by] = about_damage.xpath('span[@style="color: #428F43;"]').text
 				
 				# DAMAGE:9 Links destroyed by godiego at 10:00 hrs GMTNo remaining Resonators detected on this Portal.
-				about_damage.text.match(/([0-9]{1}) (.+) destroyed by .+ at ([0-9]{1,2}:[0-9]{1,2}) hrs GMT/) do |result|
+				about_damage.text.match(/([0-9]{1}) (.+) destroyed by .+ at ([0-9]{1,2}:[0-9]{1,2}) hrs GMT/) do |m|
 					reports[i][:portal][:damage] = {
-						:count => result[1].to_i,
-						:type => result[2].gsub(/s$/, ""),
-						:date => result[3]
+						:count => m[1].to_i,
+						:type => m[2].gsub(/s$/, ""),
+						:date => m[3]
 					}
 				end
 		
@@ -85,11 +92,11 @@ def AnalyzeReport mail
 					intel = r.attribute('href').to_s
 				end
 		
-				s.xpath('td/table[@cellpadding="0"][@cellspacing="0"][@border="0"][@width="700px"]/td').text.match(/(.+): (.+)/) do |result|
+				s.xpath('td/table[@cellpadding="0"][@cellspacing="0"][@border="0"][@width="700px"]/td').text.match(/(.+): (.+)/) do |m|
 					reports[i][:linked_portals][j] = {
 						:intel => intel,
-						:name => result[1],
-						:address => result[2]
+						:name => m[1],
+						:address => m[2]
 					}
 					j += 1
 				end
@@ -98,6 +105,7 @@ def AnalyzeReport mail
 			return 0
 		end
 	end
+	reports[:reports_count] = i + 1
 	return reports
 end
 
@@ -107,65 +115,45 @@ pp reports =>
 {:agent=>{:codename=>"Trauminator", :faction=>"Resistance", :level=>16},
  0=>
   {:portal=>
-    {:name=>"\u7D2B\u7AF9\u9AD8\u7E04\u753A\u306E\u304A\u5730\u8535\u69D8",
+    {:name=>"\u5C0F\u5C71\u4E0A\u7DCF\u753A\u5730\u8535\u5C0A",
      :intel=>
-      "https://www.ingress.com/intel?ll=35.046226,135.750117&pll=35.046226,135.750117&z=19",
+      "https://www.ingress.com/intel?ll=35.042906,135.759873&pll=35.042906,135.759873&z=19",
      :photo=>
-      "http://lh5.ggpht.com/_o3HB7cK3KKoo8eSFP3vu2JzDtsMR2PCV10WTes07ikHQtYg6aQ0lMnkSGTgeZ5s_7a3CZySpF1gHdwLq8tZ",
+      "http://lh6.ggpht.com/zOoVkoPoykPg1l5LBPJLjVn9L4hQHEnza1quuXrlqsXCq2_Rcj_AXG82tfh-aITK12IwMdk-c7f444AyQ11D",
      :intel_image=>
-      "http://maps.googleapis.com/maps/api/staticmap?center=35.046226,135.750217&zoom=19&size=700x160&style=visibility:on%7Csaturation:-50%7Cinvert_lightness:true%7Chue:0x131c1c&style=feature:water%7Cvisibility:on%7Chue:0x005eff%7Cinvert_lightness:true&style=feature:poi%7Cvisibility:off&style=feature:transit%7Cvisibility:off&markers=icon:http://commondatastorage.googleapis.com/ingress.com/img/map_icons/marker_images/neutral_icon.png%7Cshadow:false%7C35.046226,135.750117&client=gme-nianticinc&signature=zP0rBIFCdPLy2MhIwR6UUPuH82U=",
-     :damage=>{:count=>9, :type=>"Link", :date=>"10:00"}},
+      "http://maps.googleapis.com/maps/api/staticmap?center=35.042906,135.759973&zoom=19&size=700x160&style=visibility:on%7Csaturation:-50%7Cinvert_lightness:true%7Chue:0x131c1c&style=feature:water%7Cvisibility:on%7Chue:0x005eff%7Cinvert_lightness:true&style=feature:poi%7Cvisibility:off&style=feature:transit%7Cvisibility:off&markers=icon:http://commondatastorage.googleapis.com/ingress.com/img/map_icons/marker_images/hum_8res.png%7Cshadow:false%7C35.042906,135.759873&client=gme-nianticinc&signature=0txbHpc9mrj0ElvOyDZcPELoPk8=",
+     :damage=>{:count=>1, :type=>"Link", :date=>"14:38"}},
    :linked_portals=>
     [{:intel=>
-       "https://www.ingress.com/intel?ll=35.044485,135.754236&pll=35.044485,135.754236&z=19",
+       "https://www.ingress.com/intel?ll=35.043271,135.759122&pll=35.043271,135.759122&z=19",
       :name=>
-       "\u7D2B\u91CE\u67F3\u516C\u5712 \u53E4\u3073\u305F\u30E9\u30B8\u30AA\u5854",
+       "\u30BD\u30D5\u30C8\u30D0\u30F3\u30AF\u5317\u5927\u8DEF\u70CF\u4E38",
       :address=>
-       "9-1 Koyamashimohatsunecho, Kita Ward, Kyoto, Kyoto Prefecture, Japan"},
+       "15 Koyamakamifusach\u014D, Kita-ku, Ky\u014Dto-shi, Ky\u014Dto-fu 603-8143, Japan"}],
+   :attacked_by=>"Alice95",
+   :status=>{:level=>6, :health=>91, :owner=>"yukikaze846"}},
+ 1=>
+  {:portal=>
+    {:name=>
+      "\u30BD\u30D5\u30C8\u30D0\u30F3\u30AF\u5317\u5927\u8DEF\u70CF\u4E38",
+     :intel=>
+      "https://www.ingress.com/intel?ll=35.043271,135.759122&pll=35.043271,135.759122&z=19",
+     :photo=>
+      "http://lh6.ggpht.com/zOoVkoPoykPg1l5LBPJLjVn9L4hQHEnza1quuXrlqsXCq2_Rcj_AXG82tfh-aITK12IwMdk-c7f444AyQ11D",
+     :intel_image=>
+      "http://maps.googleapis.com/maps/api/staticmap?center=35.042906,135.759973&zoom=19&size=700x160&style=visibility:on%7Csaturation:-50%7Cinvert_lightness:true%7Chue:0x131c1c&style=feature:water%7Cvisibility:on%7Chue:0x005eff%7Cinvert_lightness:true&style=feature:poi%7Cvisibility:off&style=feature:transit%7Cvisibility:off&markers=icon:http://commondatastorage.googleapis.com/ingress.com/img/map_icons/marker_images/hum_8res.png%7Cshadow:false%7C35.042906,135.759873&client=gme-nianticinc&signature=0txbHpc9mrj0ElvOyDZcPELoPk8=",
+     :damage=>{:count=>2, :type=>"Link", :date=>"14:38"}},
+   :linked_portals=>
+    [{:intel=>
+       "https://www.ingress.com/intel?ll=35.042906,135.759873&pll=35.042906,135.759873&z=19",
+      :name=>"\u5C0F\u5C71\u4E0A\u7DCF\u753A\u5730\u8535\u5C0A",
+      :address=>
+       "2 Koyamakamifusacho, Kita Ward, Kyoto, Kyoto Prefecture, Japan"},
      {:intel=>
-       "https://www.ingress.com/intel?ll=35.043372,135.750953&pll=35.043372,135.750953&z=19",
-      :name=>"Holiness Church",
+       "https://www.ingress.com/intel?ll=35.043487,135.758256&pll=35.043487,135.758256&z=19",
+      :name=>"\u4EAC\u90FD\u8056\u5F92\u6559\u4F1A",
       :address=>
-       "Murasakino Dori, Kita Ward, Kyoto, Kyoto Prefecture 603-8175, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.043837,135.748594&pll=35.043837,135.748594&z=19",
-      :name=>"\u552F\u660E\u5BFA",
-      :address=>
-       "Omiya Dori, Kita Ward, Kyoto, Kyoto Prefecture 603-8211, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.045297,135.756157&pll=35.045297,135.756157&z=19",
-      :name=>
-       "\u5C0F\u5C71\u4E0B\u677F\u5009\u753A\u306E\u304A\u5730\u8535\u69D8",
-      :address=>
-       "Koromonotana Dori, Koyamashimoitakuracho, Kita Ward, Kyoto, Kyoto Prefecture 603-8122, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.043170,135.754737&pll=35.043170,135.754737&z=19",
-      :name=>
-       "\u5C0F\u5C71\u5317\u5927\u91CE\u753A\u306E\u304A\u5730\u8535\u69D8",
-      :address=>
-       "Shin-machi Dori, Koyamakitaonocho, Kita Ward, Kyoto, Kyoto Prefecture 603-0000, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.045417,135.758409&pll=35.045417,135.758409&z=19",
-      :name=>"Golden Spikes",
-      :address=>
-       "49 Koyamakitakamifusach\u014D, Kita-ku, Ky\u014Dto-shi, Ky\u014Dto-fu, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.043299,135.746770&pll=35.043299,135.746770&z=19",
-      :name=>
-       "\u77F3\u4ECF\u9054\u306E\u304A\u5802 \u7D2B\u91CE\u9580\u524D\u753A",
-      :address=>
-       "Daitokuji Dori, Kita Ward, Kyoto, Kyoto Prefecture 603-8231, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.041091,135.746575&pll=35.041091,135.746575&z=19",
-      :name=>"\u5927\u5FB3\u5BFA \u5357\u5C71\u9580",
-      :address=>
-       "85 Murasakino Daitokujich\u014D, Kita-ku, Ky\u014Dto-shi, Ky\u014Dto-fu 603-8231, Japan"},
-     {:intel=>
-       "https://www.ingress.com/intel?ll=35.044994,135.746711&pll=35.044994,135.746711&z=19",
-      :name=>
-       "\u5927\u5FB3\u5BFA\u5317\u6771\u306E\u304A\u5730\u8535\u3055\u3093",
-      :address=>
-       "Daitokuji Dori, Murasakino Daitokujicho, Kita Ward, Kyoto, Kyoto Prefecture 616-0000, Japan"}],
-   :attacked_by=>"godiego",
-   :status=>{:level=>1, :health=>0, :owner=>"[uncaptured]"}}}
+       "50 Koyamakamifusacho, Kita Ward, Kyoto, Kyoto Prefecture, Japan"}],
+   :attacked_by=>"Alice95",
+   :status=>{:level=>1, :health=>15, :owner=>"Trauminator"}}}
 =end
