@@ -6,16 +6,17 @@ def AnalyzeReport mail
 	r = @doc.xpath('//table[@width="750px"]/tbody/tr[2]/td/table[@width="700px"]/tbody/tr')
 	
 	reports = {}
+	agent = nil
 	i = 0 # for reports
 	j = 0 # for linked portals
-	
+						
 	r.each do |s|
 		begin
 			# Agent 情報
 			unless s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').empty?
 				#puts s.to_html
 				s.xpath('td[@valign="top"][@style="font-size: 13px; padding-bottom: 1.5em;"]').text.match(/Agent Name:(.+)Faction:(.+)Current Level:L([0-9]{1,2})$/) do |m|
-					reports[:agent] = {
+					agent = {
 						:codename => m[1],
 						:faction => m[2],
 						:level => m[3].to_i
@@ -105,8 +106,7 @@ def AnalyzeReport mail
 			return 0
 		end
 	end
-	reports[:reports_count] = i + 1
-	return reports
+	return {:reports => reports, :agent => agent}
 end
 
 
