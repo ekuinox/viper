@@ -87,7 +87,7 @@ def AnalyzeReport mail
 					report[:status][:resonators_count] = m[2].nil?? m[1].to_i : 0
 				end
 				# :owner => "[uncaptured]"をnilにする
-				report[:status][:onwer] = nil if report[:status][:owner] == "[uncaptured]"
+				report[:status][:onwer] = nil if report[:status][:owner].match /[uncaptured]/
 			end
 		
 			# リンクのつながっていたポータルの情報を抜く
