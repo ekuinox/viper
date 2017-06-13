@@ -61,19 +61,19 @@ def AnalyzeReport mail
 			unless s.xpath('td[@style="padding: 1em 0;"]').empty?
 				# ダメージ詳細
 				about_damage = s.xpath('td[@style="padding: 1em 0;"]/table/td[@width="400px"]/div')
-				report[:attacked_by] = about_damage.xpath('span[@style="color: #428F43;"]').text
+				report[:attacked_by] = about_damage.xpath('span[@style="color: #428F43;"]')[0].text
 				
 				# DAMAGE:9 Links destroyed by godiego at 10:00 hrs GMTNo remaining Resonators detected on this Portal.
-				about_damage.text.match(/([0-9]{1}) (.+) destroyed by .+ at ([0-9]{1,2}:[0-9]{1,2}) hrs GMT/) do |m|
-					report[:portal][:damage] = {
-						:count => m[1].to_i,
-						:type => m[2].gsub(/s$/, ""),
-						:date => m[3]
-					}
+				report[:portal][:damages] = []
+				about_damage.to_html.split("<br>").each do |line|
+					line.match(/([0-9]{1}) (\S+) destroyed by .+ at ([0-9]{1,2}:[0-9]{1,2}) hrs GMT/) do |m|
+						report[:portal][:damages].push({
+							:count => m[1].to_i,
+							:type => m[2].gsub(/s$/, ""),
+							:date => m[3]
+							})
+					end
 				end
-		
-				# レゾネータの残量を取る，けどいらないかな
-				#resonators_remaining_count = about_damage.text.scan(/No Remaining Resonators/).empty?? about_damage.text.scan(/([0-9]) Resonators? remaining/)[0][0].to_i : 0
 				
 				# STATUS:Level 1Health: 3%Owner: tujiyan
 				portal_status = s.xpath('td[@style="padding: 1em 0;"]/table/td[2]/div')
@@ -82,6 +82,12 @@ def AnalyzeReport mail
 					:health => portal_status.text.match(/Health: ([0-9]{1,})%/)[1].to_i,
 					:owner => portal_status.text.match(/Owner: (.+)/)[1]
 				}
+				# レゾネータの残量を取る
+				about_damage.to_html.split("<br>")[-1].match /([0-9]) Resonator(:?s)? remaining on this Portal|(No) remaining Resonators detected on this Portal./ do |m|
+					report[:status][:resonators_count] = m[2].nil?? m[1].to_i : 0
+				end
+				# :owner => "[uncaptured]"をnilにする
+				report[:status][:onwer] = nil if report[:status][:owner] == "[uncaptured]"
 			end
 		
 			# リンクのつながっていたポータルの情報を抜く

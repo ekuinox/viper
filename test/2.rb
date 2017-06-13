@@ -10,4 +10,4 @@ json = JSON.generate reports
 
 r = JSON.parse json
 
-pp r["reports"][0]
+pp r["reports"]
